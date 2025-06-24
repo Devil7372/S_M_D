@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spotify Music Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      color: #1db954;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 60%;
+      border-radius: 4px;
+      border: none;
+    }
+    button {
+      padding: 10px 20px;
+      background: #1db954;
+      border: none;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-left: 10px;
+    }
+    .track {
+      background: #282828;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 10px;
+      width: 80%;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .track img {
+      height: 60px;
+      border-radius: 5px;
+    }
+    .track-info {
+      text-align: left;
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Spotify Song Search</h1>
+  <div>
+    <input type="text" id="searchInput" placeholder="Search for a song or artist..." />
+    <button onclick="searchSpotify()">Search</button>
+  </div>
+  <div id="results"></div>
+
+  <script>
+    // Replace with your actual values
+    const CLIENT_ID = '36745b6cefa84804af6c19c9bd760214';
+    const REDIRECT_URI = window.location.origin;
+
+    const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
+    const RESPONSE_TYPE = "token";
+    const SCOPES = "";
+
+    let token = window.location.hash
+      .substring(1)
+      .split("&")
+      .find(elem => elem.startsWith("access_token"))
+      ?.split("=")[1];
+
+    if (!token) {
+      window.location = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPES}`;
+    }
+
+    function searchSpotify() {
+      const query = document.getElementById("searchInput").value;
+      fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        const results = document.getElementById("results");
+        results.innerHTML = "";
+        data.tracks.items.forEach(track => {
+          const div = document.createElement("div");
+          div.className = "track";
+          div.innerHTML = `
+            <img src="${track.album.images[0]?.url}" />
+            <div class="track-info">
+              <strong>${track.name}</strong><br/>
+              ${track.artists.map(a => a.name).join(", ")}<br/>
+              <audio controls src="${track.preview_url || ''}">No preview available</audio>
+            </div>
+          `;
+          results.appendChild(div);
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Something went wrong. Try again.");
+      });
+    }
+  </script>
+
+</body>
+</html>
